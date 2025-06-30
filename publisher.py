@@ -1,12 +1,14 @@
 import paho.mqtt.client as mqtt
+import ssl # Diperlukan untuk tls_set
 import time
 import json
 import random
 import threading
 
-# --- Konfigurasi ---
+# === PERUBAHAN PADA KONFIGURASI ===
 MQTT_BROKER = "broker.hivemq.com"
-MQTT_PORT = 1883
+MQTT_PORT = 8883 # Port untuk koneksi terenkripsi (TLS)
+# === AKHIR PERUBAHAN ===
 
 # Ambang batas ketinggian air (dalam cm) untuk status peringatan
 AMBANG_AMAN = 100
@@ -16,17 +18,17 @@ AMBANG_SIAGA = 200
 SENSORS = [
     {
         "id": "sensor01",
-        "lokasi": "Hulu Sungai Tallo",
+        "lokasi": "Hulu Sungai Tallo (Gowa)",
         "topic": "sungai/tallo/sensor01/data",
-        "ketinggian": 50.0,
-        "lat": -5.123,
-        "lon": 119.485
+        "ketinggian": 40.0,
+        "lat": -5.115,  # Sedikit lebih ke hulu
+        "lon": 119.520
     },
     {
         "id": "sensor02",
         "lokasi": "Jembatan Tallo",
         "topic": "sungai/tallo/sensor02/data",
-        "ketinggian": 40.0,
+        "ketinggian": 30.0,
         "lat": -5.130,
         "lon": 119.455
     },
@@ -34,15 +36,39 @@ SENSORS = [
         "id": "sensor03",
         "lokasi": "Muara Sungai Tallo",
         "topic": "sungai/tallo/sensor03/data",
-        "ketinggian": 30.0,
+        "ketinggian": 20.0,
         "lat": -5.135,
         "lon": 119.425
+    },
+    {
+        "id": "sensor04", # Sensor Baru 1
+        "lokasi": "Antang (Anak Sungai Tallo)",
+        "topic": "sungai/tallo/sensor04/data",
+        "ketinggian": 25.0,
+        "lat": -5.165,
+        "lon": 119.480
+    },
+    {
+        "id": "sensor05", # Sensor Baru 2
+        "lokasi": "Jembatan Jeneberang",
+        "topic": "sungai/tallo/sensor05/data", # Topik tetap sama untuk ditangkap wildcard
+        "ketinggian": 35.0,
+        "lat": -5.188,
+        "lon": 119.431
     }
 ]
 
 def connect_mqtt(client_id):
     """Membuat dan mengembalikan client MQTT yang sudah terhubung."""
     client = mqtt.Client(client_id=client_id)
+    
+    # === TAMBAHKAN KEAMANAN ===
+    # 1. Atur username dan password
+    client.username_pw_set("userbanjir", "passwordrahasia123")
+    # 2. Aktifkan enkripsi TLS
+    client.tls_set(tls_version=ssl.PROTOCOL_TLS)
+    # === AKHIR TAMBAHAN ===
+
     try:
         client.connect(MQTT_BROKER, MQTT_PORT, 60)
         return client
